@@ -1,0 +1,63 @@
+version: "3.8"
+
+networks:
+  booky_dev:
+
+volumes:
+  db_data_dev: {}
+
+services:
+  app:
+    container_name: booky_app_dev
+    build:
+      context: .
+      dockerfile: ./docker/app/Dockerfile
+    env_file:
+      - ./docker/app/.env
+    ports:
+      - "4031:8080"
+    volumes:
+      - ".:/app"
+      - "./data_dev:/data/booky"
+    depends_on:
+      - db
+    networks:
+      - booky_dev
+    stdin_open: true      
+    tty: true         
+  client:
+    image: booky_client
+    build:
+      context: .
+      dockerfile: ./docker/client/Dockerfile
+    volumes:
+      - "./client/.:/app"
+    ports:
+      - "4030:8080"
+    networks:
+      - booky_dev
+  db:
+    container_name: booky_db
+    image: mariadb:10.6
+    volumes:
+      - db_data_dev:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: pw
+      MYSQL_DATABASE: booky
+      MYSQL_USER: booky
+      MYSQL_PASSWORD: booky
+    ports:
+      - 4033:3306
+    restart: always
+    networks:
+      - booky_dev
+  adminer_dev:
+    container_name: booky_adminer
+    image: adminer:4.8.1
+    restart: always
+    ports:
+      - 4032:8080
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    networks:
+      - booky_dev
